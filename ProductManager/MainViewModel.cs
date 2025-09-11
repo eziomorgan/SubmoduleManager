@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -16,6 +16,7 @@ namespace ProductManager
     {
         public ObservableCollection<SubmoduleViewModel> Submodules { get; } = new();
         public ObservableCollection<string> Log { get; } = new();
+        public ObservableCollection<string> PopularBranches { get; } = new();
 
         public ICommand BrowseFolderCommand { get; }
         public ICommand RefreshAllCommand { get; }
@@ -23,6 +24,9 @@ namespace ProductManager
         public ICommand CheckoutAllCommand { get; }
         public ICommand SelectAllCommand { get; }
         public ICommand UnselectAllCommand { get; }
+        public ICommand SelectPopularBranchCommand { get; }
+
+        private string _repoRoot;
 
         public MainViewModel()
         {
@@ -32,6 +36,7 @@ namespace ProductManager
             CheckoutAllCommand = new RelayCommand(async _ => await CheckoutAllAsync());
             SelectAllCommand = new RelayCommand(_ => SelectAll());
             UnselectAllCommand = new RelayCommand(_ => UnselectAll());
+            SelectPopularBranchCommand = new RelayCommand(b => SetPopularBranch(b as string));
         }
 
         private void BrowseAndLoad()
@@ -94,9 +99,13 @@ namespace ProductManager
             foreach (var sm in Submodules)
                 sm.IsSelected = false;
         }
+
         private void LoadSubmodulesFromGitModules(string repoRoot)
         {
             Submodules.Clear();
+            PopularBranches.Clear();
+            _repoRoot = repoRoot;
+            LoadPopularBranches();
 
             var gitRoot = Path.Combine(repoRoot, ".git");
             var modulesDir = Path.Combine(gitRoot, "modules");
@@ -137,9 +146,55 @@ namespace ProductManager
                     };
 
                     model.RefreshBranches();
-                    Submodules.Add(new SubmoduleViewModel(model));
+                    Submodules.Add(new SubmoduleViewModel(model, AddPopularBranch));
                     AppendLog($"Loaded submodule {name} at {workingPath}");
                 }
+            }
+        }
+
+        private string PopularBranchFile => string.IsNullOrEmpty(_repoRoot) ? null : Path.Combine(_repoRoot, ".popular_branches.json");
+
+        public void AddPopularBranch(string branch)
+        {
+            if (string.IsNullOrWhiteSpace(branch) || PopularBranches.Contains(branch))
+                return;
+            PopularBranches.Add(branch);
+        }
+
+        private void SetPopularBranch(string branch)
+        {
+            if (string.IsNullOrWhiteSpace(branch))
+                return;
+            foreach (var sm in Submodules.Where(s => s.Branches.Contains(branch)))
+                sm.SelectedBranch = branch;
+        }
+
+        private void LoadPopularBranches()
+        {
+            var path = PopularBranchFile;
+            if (path != null && File.Exists(path))
+            {
+                try
+                {
+                    var list = JsonSerializer.Deserialize<List<string>>(File.ReadAllText(path));
+                    if (list != null)
+                        foreach (var b in list)
+                            PopularBranches.Add(b);
+                }
+                catch { }
+            }
+        }
+
+        public void SavePopularBranches()
+        {
+            var path = PopularBranchFile;
+            if (path != null)
+            {
+                try
+                {
+                    File.WriteAllText(path, JsonSerializer.Serialize(PopularBranches));
+                }
+                catch { }
             }
         }
 

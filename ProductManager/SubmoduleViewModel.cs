@@ -49,18 +49,18 @@ namespace ProductManager
         public ICommand RefreshCommand { get; }
         public ICommand PullCommand { get; }
         public ICommand CheckoutCommand { get; }
+        public ICommand AddPopularBranchCommand { get; }
 
-        public SubmoduleViewModel(GitSubmodule model)
+        public SubmoduleViewModel(GitSubmodule model, Action<string> addPopularBranch)
         {
             _model = model;
             Branches = new ObservableCollection<string>(_model.Branches ?? new string[0]);
             _selectedBranch = _model.CurrentBranch;
 
             RefreshCommand = new RelayCommand(_ => _ = RefreshAsync());
-
             PullCommand = new RelayCommand(_ => _ = PullAsync());
-
             CheckoutCommand = new RelayCommand(_ => _ = CheckoutAsync());
+            AddPopularBranchCommand = new RelayCommand(_ => addPopularBranch?.Invoke(SelectedBranch));
         }
 
         public Task RefreshAsync()
