@@ -25,8 +25,20 @@ namespace ProductManager
 
         public void CheckoutBranch(string branchName)
         {
-            RunGit($"checkout {branchName}", Path);
-            CurrentBranch = branchName;
+            if (string.IsNullOrWhiteSpace(branchName))
+                return;
+
+            if (branchName.Contains('/'))
+            {
+                var local = branchName.Substring(branchName.IndexOf('/') + 1);
+                RunGit($"checkout --track -B {local} {branchName}", Path);
+                CurrentBranch = local;
+            }
+            else
+            {
+                RunGit($"checkout {branchName}", Path);
+                CurrentBranch = branchName;
+            }
         }
 
         public void PullLatest()
