@@ -12,8 +12,13 @@
     <Window.Resources>
         <local:LogJoinConverter x:Key="LogJoinConverter" />
     </Window.Resources>
-    <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
             <Button Content="Open Folder" Command="{Binding BrowseFolderCommand}" Margin="0,0,6,0" />
             <Button Content="Refresh All" Command="{Binding RefreshAllCommand}" Margin="0,0,6,0" />
             <Button Content="Update All" Command="{Binding UpdateAllCommand}" Margin="0,0,6,0" />
@@ -21,20 +26,19 @@
             <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,6,0"/>
             <Button Content="Unselect All" Command="{Binding UnselectAllCommand}" />
         </StackPanel>
-        <DataGrid DockPanel.Dock="Top"
+        <DataGrid Grid.Row="1"
             ItemsSource="{Binding Submodules}"
             AutoGenerateColumns="False"
-            Margin="5"
-            Height="300">
+            Margin="5">
             <DataGrid.Columns>
                 <DataGridCheckBoxColumn Header="Select" Binding="{Binding IsSelected, Mode=TwoWay}" Width="Auto" />
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
                 <DataGridTemplateColumn Header="Branch" Width="2*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <ComboBox ItemsSource="{Binding Branches}" 
-                                SelectedItem="{Binding SelectedBranch, 
-                                Mode=TwoWay, 
+                            <ComboBox ItemsSource="{Binding Branches}"
+                                SelectedItem="{Binding SelectedBranch,
+                                Mode=TwoWay,
                                 UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -53,13 +57,13 @@
             </DataGrid.Columns>
         </DataGrid>
         <!-- Log panel -->
-        <TextBox DockPanel.Dock="Bottom"
+        <TextBox Grid.Row="2"
             Text="{Binding Log, Converter={StaticResource LogJoinConverter}, Mode=OneWay}"
             AcceptsReturn="True"
             IsReadOnly="True"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Auto"
-            Height="200"
-            Margin="5"/>
-    </DockPanel>
+            Margin="5"
+            TextChanged="LogTextBox_TextChanged"/>
+    </Grid>
 </Window>

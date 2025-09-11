@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace ProductManager
@@ -55,28 +56,43 @@ namespace ProductManager
             Branches = new ObservableCollection<string>(_model.Branches ?? new string[0]);
             _selectedBranch = _model.CurrentBranch;
 
-            RefreshCommand = new RelayCommand(_ =>
+            RefreshCommand = new RelayCommand(_ => _ = RefreshAsync());
+
+            PullCommand = new RelayCommand(_ => _ = PullAsync());
+
+            CheckoutCommand = new RelayCommand(_ => _ = CheckoutAsync());
+        }
+
+        public Task RefreshAsync()
+        {
+            return Task.Run(() =>
             {
                 _model.RefreshBranches();
-                Branches.Clear();
-                foreach (var b in _model.Branches)
-                    Branches.Add(b);
-                OnPropertyChanged(nameof(Branches));
-            });
-
-            PullCommand = new RelayCommand(_ => _model.PullLatest());
-
-            CheckoutCommand = new RelayCommand(_ =>
-            {
-
-                if (!string.IsNullOrEmpty(SelectedBranch))
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    _model.CheckoutBranch(SelectedBranch);
+                    Branches.Clear();
+                    foreach (var b in _model.Branches)
+                        Branches.Add(b);
+                    OnPropertyChanged(nameof(Branches));
+                });
+            });
+        }
 
-                    // After checkout, update model + notify
+        public Task PullAsync() => Task.Run(() => _model.PullLatest());
+
+        public Task CheckoutAsync()
+        {
+            if (string.IsNullOrEmpty(SelectedBranch))
+                return Task.CompletedTask;
+
+            return Task.Run(() =>
+            {
+                _model.CheckoutBranch(SelectedBranch);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
                     _selectedBranch = SelectedBranch;
                     OnPropertyChanged(nameof(SelectedBranch));
-                }
+                });
             });
         }
 

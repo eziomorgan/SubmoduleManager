@@ -21,5 +21,10 @@ namespace ProductManager
         {
             InitializeComponent();
         }
+
+        private void LogTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            (sender as TextBox)?.ScrollToEnd();
+        }
     }
 }
