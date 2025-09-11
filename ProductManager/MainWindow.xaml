@@ -18,13 +18,27 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
-            <Button Content="Open Folder" Command="{Binding BrowseFolderCommand}" Margin="0,0,6,0" />
-            <Button Content="Refresh All" Command="{Binding RefreshAllCommand}" Margin="0,0,6,0" />
-            <Button Content="Update All" Command="{Binding UpdateAllCommand}" Margin="0,0,6,0" />
-            <Button Content="Checkout All" Command="{Binding CheckoutAllCommand}" Margin="0,0,6,0"/>
-            <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,6,0"/>
-            <Button Content="Unselect All" Command="{Binding UnselectAllCommand}" />
+        <StackPanel Grid.Row="0" Margin="5">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Open Folder" Command="{Binding BrowseFolderCommand}" Margin="0,0,6,0" />
+                <Button Content="Refresh All" Command="{Binding RefreshAllCommand}" Margin="0,0,6,0" />
+                <Button Content="Update All" Command="{Binding UpdateAllCommand}" Margin="0,0,6,0" />
+                <Button Content="Checkout All" Command="{Binding CheckoutAllCommand}" Margin="0,0,6,0"/>
+                <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,6,0"/>
+                <Button Content="Unselect All" Command="{Binding UnselectAllCommand}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding PopularBranches}" Margin="0,5,0,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding}" Command="{Binding DataContext.SelectPopularBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Margin="0,0,6,0" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
         <DataGrid Grid.Row="1"
             ItemsSource="{Binding Submodules}"
@@ -49,7 +63,8 @@
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Refresh" Command="{Binding RefreshCommand}" Margin="0,0,6,0" />
                                 <Button Content="Update" Command="{Binding PullCommand}" Margin="0,0,6,0" />
-                                <Button Content="Checkout" Command="{Binding CheckoutCommand}" />
+                                <Button Content="Checkout" Command="{Binding CheckoutCommand}" Margin="0,0,6,0" />
+                                <Button Content="Add" Command="{Binding AddPopularBranchCommand}" />
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

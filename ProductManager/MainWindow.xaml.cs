@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,6 +26,13 @@ namespace ProductManager
         private void LogTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             (sender as TextBox)?.ScrollToEnd();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+                vm.SavePopularBranches();
+            base.OnClosed(e);
         }
     }
 }
