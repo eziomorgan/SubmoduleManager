@@ -18,7 +18,8 @@
             <Button Content="Refresh All" Command="{Binding RefreshAllCommand}" Margin="0,0,6,0" />
             <Button Content="Update All" Command="{Binding UpdateAllCommand}" Margin="0,0,6,0" />
             <Button Content="Checkout All" Command="{Binding CheckoutAllCommand}" Margin="0,0,6,0"/>
-            <Button Content="Select All" Command="{Binding SelectAllCommand}" />
+            <Button Content="Select All" Command="{Binding SelectAllCommand}" Margin="0,0,6,0"/>
+            <Button Content="Unselect All" Command="{Binding UnselectAllCommand}" />
         </StackPanel>
         <DataGrid DockPanel.Dock="Top"
             ItemsSource="{Binding Submodules}"

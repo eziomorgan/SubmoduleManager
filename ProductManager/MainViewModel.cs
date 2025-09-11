@@ -20,8 +20,9 @@ namespace ProductManager
         public ICommand RefreshAllCommand { get; }
         public ICommand UpdateAllCommand { get; }
         public ICommand CheckoutAllCommand { get; }
-
         public ICommand SelectAllCommand { get; }
+        public ICommand UnselectAllCommand { get; }
+
         public MainViewModel()
         {
             BrowseFolderCommand = new RelayCommand(_ => BrowseAndLoad());
@@ -29,6 +30,7 @@ namespace ProductManager
             UpdateAllCommand = new RelayCommand(_ => UpdateAll());
             CheckoutAllCommand = new RelayCommand(_ => CheckoutAll());
             SelectAllCommand = new RelayCommand(_ => SelectAll());
+            UnselectAllCommand = new RelayCommand(_ => UnselectAll());
         }
 
         private void BrowseAndLoad()
@@ -84,6 +86,12 @@ namespace ProductManager
         {
            foreach (var sm in Submodules)
                 sm.IsSelected = true;
+        }
+
+        private void UnselectAll()
+        {
+            foreach (var sm in Submodules)
+                sm.IsSelected = false;
         }
         private void LoadSubmodulesFromGitModules(string repoRoot)
         {
