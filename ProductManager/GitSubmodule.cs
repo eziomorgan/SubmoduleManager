@@ -36,11 +36,13 @@ namespace ProductManager
 
         public void RefreshBranches()
         {
-            var output = RunGitWithOutput("branch --format=%(refname:short)", Path);
+            var output = RunGitWithOutput("branch --format=%(refname:short) --all", Path);
             if (!string.IsNullOrWhiteSpace(output))
             {
                 Branches = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                                   .Select(s => s.Trim('*', ' ', '\t'))
+                                  .Where(s => s != "HEAD" && !s.EndsWith("/HEAD"))
+                                  .Select(s => s.StartsWith("remotes/") ? s.Substring("remotes/".Length) : s)
                                   .Distinct()
                                   .OrderBy(b => b)
                                   .ToArray();
@@ -64,6 +66,17 @@ namespace ProductManager
                 }
             }
 
+            var remotesDir = System.IO.Path.Combine(GitDir, "refs", "remotes");
+            if (Directory.Exists(remotesDir))
+            {
+                foreach (var file in Directory.EnumerateFiles(remotesDir, "*", SearchOption.AllDirectories))
+                {
+                    var rel = file.Substring(remotesDir.Length + 1).Replace('\\', '/');
+                    if (!rel.EndsWith("/HEAD"))
+                        list.Add(rel);
+                }
+            }
+
             var packed = System.IO.Path.Combine(GitDir, "packed-refs");
             if (File.Exists(packed))
             {
@@ -71,9 +84,18 @@ namespace ProductManager
                 {
                     if (line.StartsWith("#") || string.IsNullOrWhiteSpace(line)) continue;
                     var parts = line.Split(' ');
-                    if (parts.Length == 2 && parts[1].StartsWith("refs/heads/"))
+                    if (parts.Length == 2)
                     {
-                        list.Add(parts[1].Substring("refs/heads/".Length));
+                        if (parts[1].StartsWith("refs/heads/"))
+                        {
+                            list.Add(parts[1].Substring("refs/heads/".Length));
+                        }
+                        else if (parts[1].StartsWith("refs/remotes/"))
+                        {
+                            var rel = parts[1].Substring("refs/remotes/".Length);
+                            if (!rel.EndsWith("/HEAD"))
+                                list.Add(rel);
+                        }
                     }
                 }
             }
