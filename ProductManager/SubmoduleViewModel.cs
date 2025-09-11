@@ -13,7 +13,19 @@ namespace ProductManager
     public class SubmoduleViewModel : INotifyPropertyChanged
     {
         private readonly GitSubmodule _model;
-        public bool IsSelected { get; set; } // for checkbox
+        private bool _isSelected; // for checkbox
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (_isSelected != value)
+                {
+                    _isSelected = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         public string Name => _model.Name;
         public string WorkingPath => _model.Path;
 
