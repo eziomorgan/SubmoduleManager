@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace ProductManager
@@ -26,9 +27,9 @@ namespace ProductManager
         public MainViewModel()
         {
             BrowseFolderCommand = new RelayCommand(_ => BrowseAndLoad());
-            RefreshAllCommand = new RelayCommand(_ => RefreshAll());
-            UpdateAllCommand = new RelayCommand(_ => UpdateAll());
-            CheckoutAllCommand = new RelayCommand(_ => CheckoutAll());
+            RefreshAllCommand = new RelayCommand(async _ => await RefreshAllAsync());
+            UpdateAllCommand = new RelayCommand(async _ => await UpdateAllAsync());
+            CheckoutAllCommand = new RelayCommand(async _ => await CheckoutAllAsync());
             SelectAllCommand = new RelayCommand(_ => SelectAll());
             UnselectAllCommand = new RelayCommand(_ => UnselectAll());
         }
@@ -53,31 +54,31 @@ namespace ProductManager
             }
         }
 
-        private void RefreshAll()
+        private async Task RefreshAllAsync()
         {
             foreach (var sm in Submodules.Where(x => x.IsSelected))
             {
-                sm.RefreshCommand.Execute(null);
+                await sm.RefreshAsync();
                 AppendLog($"Refreshed {sm.Name}");
             }
         }
 
 
-        private void UpdateAll()
+        private async Task UpdateAllAsync()
         {
             foreach (var sm in Submodules.Where(x => x.IsSelected))
             {
-                sm.PullCommand.Execute(null);
+                await sm.PullAsync();
                 AppendLog($"Updated {sm.Name}");
             }
         }
 
 
-        private void CheckoutAll()
+        private async Task CheckoutAllAsync()
         {
             foreach (var sm in Submodules.Where(x => x.IsSelected))
             {
-                sm.CheckoutCommand.Execute(null);
+                await sm.CheckoutAsync();
                 AppendLog($"Checked out {sm.Name} to {sm.SelectedBranch}");
             }
         }
@@ -172,8 +173,11 @@ namespace ProductManager
 
         public void AppendLog(string message)
         {
-            Log.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
-            OnPropertyChanged(nameof(Log));
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Log.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
+                OnPropertyChanged(nameof(Log));
+            });
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
