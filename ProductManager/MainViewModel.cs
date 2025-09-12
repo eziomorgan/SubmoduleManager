@@ -165,7 +165,7 @@ namespace ProductManager
         {
             if (string.IsNullOrWhiteSpace(branch))
                 return;
-            foreach (var sm in Submodules.Where(s => s.Branches.Contains(branch)))
+            foreach (var sm in Submodules.Where(s => s.IsSelected && s.Branches.Contains(branch)))
                 sm.SelectedBranch = branch;
         }
 
