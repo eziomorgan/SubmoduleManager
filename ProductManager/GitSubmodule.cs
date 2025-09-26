@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace ProductManager
 {
@@ -51,13 +52,42 @@ namespace ProductManager
             var output = RunGitWithOutput("branch --format=%(refname:short) --all", Path);
             if (!string.IsNullOrWhiteSpace(output))
             {
-                Branches = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                                  .Select(s => s.Trim('*', ' ', '\t'))
-                                  .Where(s => s != "HEAD" && !s.EndsWith("/HEAD"))
-                                  .Select(s => s.StartsWith("remotes/") ? s.Substring("remotes/".Length) : s)
-                                  .Distinct()
-                                  .OrderBy(b => b)
-                                  .ToArray();
+                var entries = new List<(string Name, bool IsRemote)>();
+                var splits = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var raw in splits)
+                {
+                    var line = raw.Trim('*', ' ', '\t');
+                    if (line.Length == 0)
+                        continue;
+
+                    // Skip symbolic refs like: "remotes/origin/HEAD -> origin/main"
+                    if (line.Contains(" -> "))
+                        continue;
+
+                    if (line.Contains(" -> "))
+                        continue;
+
+                    if (line == "origin")
+                        continue;
+
+                    bool isRemote = false;
+                    if (line.StartsWith("remotes/", StringComparison.Ordinal))
+                    {
+                        line = line.Substring("remotes/".Length); // normalize to "origin/branch"
+                        isRemote = true;
+                    }
+                    else if (line.StartsWith("origin/", StringComparison.Ordinal))
+                    {
+                        // already normalized remote branch name
+                        isRemote = true;
+                    }
+
+                    if (line.EndsWith("/HEAD", StringComparison.Ordinal))
+                        continue;
+
+                    entries.Add((line, isRemote));
+                }
+                Branches = SortBranches(entries);
                 return;
             }
 
@@ -67,14 +97,14 @@ namespace ProductManager
                 return;
             }
 
-            var list = new List<string>();
+            var branchEntries = new List<(string Name, bool IsRemote)>();
             var headsDir = System.IO.Path.Combine(GitDir, "refs", "heads");
             if (Directory.Exists(headsDir))
             {
                 foreach (var file in Directory.EnumerateFiles(headsDir, "*", SearchOption.AllDirectories))
                 {
                     var rel = file.Substring(headsDir.Length + 1).Replace('\\', '/');
-                    list.Add(rel);
+                    branchEntries.Add((rel, false));
                 }
             }
 
@@ -85,7 +115,7 @@ namespace ProductManager
                 {
                     var rel = file.Substring(remotesDir.Length + 1).Replace('\\', '/');
                     if (!rel.EndsWith("/HEAD"))
-                        list.Add(rel);
+                        branchEntries.Add((rel, true));
                 }
             }
 
@@ -100,19 +130,33 @@ namespace ProductManager
                     {
                         if (parts[1].StartsWith("refs/heads/"))
                         {
-                            list.Add(parts[1].Substring("refs/heads/".Length));
+                            branchEntries.Add((parts[1].Substring("refs/heads/".Length), false));
                         }
                         else if (parts[1].StartsWith("refs/remotes/"))
                         {
                             var rel = parts[1].Substring("refs/remotes/".Length);
                             if (!rel.EndsWith("/HEAD"))
-                                list.Add(rel);
+                                branchEntries.Add((rel, true));
                         }
                     }
                 }
             }
 
-            Branches = list.Distinct().OrderBy(b => b).ToArray();
+            Branches = SortBranches(branchEntries);
+        }
+
+        private static string[] SortBranches(IEnumerable<(string Name, bool IsRemote)> branches)
+        {
+            if (branches == null)
+                return Array.Empty<string>();
+
+            return branches
+                .GroupBy(b => b.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new { Name = g.Key, IsRemote = g.Any(b => b.IsRemote) })
+                .OrderBy(b => b.IsRemote ? 0 : 1)
+                .ThenBy(b => b.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(b => b.Name)
+                .ToArray();
         }
 
         private void RunGit(string args, string workingDir)
