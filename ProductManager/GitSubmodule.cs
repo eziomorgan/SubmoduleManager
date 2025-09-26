@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace ProductManager
 {
@@ -52,20 +53,40 @@ namespace ProductManager
             if (!string.IsNullOrWhiteSpace(output))
             {
                 var entries = new List<(string Name, bool IsRemote)>();
-                foreach (var raw in output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                var splits = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var raw in splits)
                 {
-                    var cleaned = raw.Trim('*', ' ', '\t');
-                    if (string.IsNullOrWhiteSpace(cleaned) || cleaned == "HEAD" || cleaned.EndsWith("/HEAD") || cleaned.Contains(" -> "))
+                    var line = raw.Trim('*', ' ', '\t');
+                    if (line.Length == 0)
                         continue;
 
-                    var isRemote = cleaned.StartsWith("remotes/");
-                    var name = isRemote ? cleaned.Substring("remotes/".Length) : cleaned;
-                    if (string.IsNullOrWhiteSpace(name) || name.EndsWith("/HEAD"))
+                    // Skip symbolic refs like: "remotes/origin/HEAD -> origin/main"
+                    if (line.Contains(" -> "))
                         continue;
 
-                    entries.Add((name, isRemote));
+                    if (line.Contains(" -> "))
+                        continue;
+
+                    if (line == "origin")
+                        continue;
+
+                    bool isRemote = false;
+                    if (line.StartsWith("remotes/", StringComparison.Ordinal))
+                    {
+                        line = line.Substring("remotes/".Length); // normalize to "origin/branch"
+                        isRemote = true;
+                    }
+                    else if (line.StartsWith("origin/", StringComparison.Ordinal))
+                    {
+                        // already normalized remote branch name
+                        isRemote = true;
+                    }
+
+                    if (line.EndsWith("/HEAD", StringComparison.Ordinal))
+                        continue;
+
+                    entries.Add((line, isRemote));
                 }
-
                 Branches = SortBranches(entries);
                 return;
             }
